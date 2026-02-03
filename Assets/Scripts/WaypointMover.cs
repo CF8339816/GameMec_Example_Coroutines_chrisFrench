@@ -10,140 +10,122 @@ using UnityEngine;
 public class WaypointMover : MonoBehaviour
 {
 
-
-    Rigidbody rb;
-    GameObject WayPointPlatform;
-    List<Vector3> _waypoints = new List<Vector3>();
+    public enum MovementType {Loop, PingPong} //sets up the enum for switch select between the two movement choices.
+    [SerializeField] MovementType _movementType; //sets up the user interaction to select the movement type
    
-    //Vector3 startPosition;
-    //Vector3 endPosition;
-    //Vector3 targetPosition;
-    
-    [SerializeField]  float _speed;
-    
-    //[SerializeField] float smoothTime = 0.5f;
-    //[SerializeField] float stoppingDistance = 0.1f;
-    //[SerializeField] Vector3 currentTarget;
-    //[SerializeField] Vector3 currentVelocity = Vector3.zero;
-    //[SerializeField] float moveDuration = 4.0f;
+    Rigidbody rb;  //Provided code
+    GameObject WayPointPlatform;//Provided code
 
-    // Add the position of all children tagged "Waypoint" to the _waypoints list
-    // Also sets the position of the platform to the position of the 1st waypoint.
+    List<Vector3> _waypoints = new List<Vector3>()//Provided code
+
+    [SerializeField] float _speed;//Provided code
+
+
     private void Start()
     {
-        //startPosition = transform.position;
-        //targetPosition = gizmoWaypoints;
-        rb = GetComponent<Rigidbody>();
-        rb.isKinematic = true;
+  
+        rb = GetComponent<Rigidbody>();//Provided code
+        rb.isKinematic = true;//Provided code
 
-        foreach (Transform childTransform in this.transform)
+        foreach (Transform childTransform in this.transform)//Provided code
         {
-            if (!childTransform.CompareTag("Waypoint")) continue;
-
-            _waypoints.Add(childTransform.position);
-
+            if (!childTransform.CompareTag("Waypoint"))//Provided code
+            {
+                continue;
+            }
+            _waypoints.Add(childTransform.position);//Provided code
         }
 
-        if (_waypoints.Count == 0) return;
-
-
-        transform.position = _waypoints[0];
-
-        if (_waypoints.Count > 1)
+        if (_waypoints.Count == 0)//Provided code
         {
-            //TODO: once MoveBetweenWayPoints method exists, uncomment the line below. 
+            return;
+        }
+        transform.position = _waypoints[0];//Provided code
+
+        if (_waypoints.Count > 1)//Provided code
+        {
             StartCoroutine(MoveBetweenWayPoints());
         }
 
-
-
-    }
-
-    // COROUTINES: 
-    // A coroutine is a nice way to run some code over time, allowing you to pause in the middle of a method and then resume later!
-    // All coroutine methods must have a return type of IEnumerator. You run them by using StartCoroutine(MyCoroutineMethod())
-
-    // Challenge: 
-    // Create an IEnumerator MoveBetweenWayPoints below. 
-
-    // The coroutine should make the platform move to the waypoints in order.
-    // At each waypoint, wait for 1 second. Hint: WaitForSecondsRealTime(1f)
-
-    // useful methods: Vector3.MoveTowards, rb.MovePosition
-
-    // The solution should only be approximately 15-20 lines of code or less (not including bracket lines and whitespace). 
-
-    IEnumerator MoveBetweenWayPoints()
-    {
-
-        //  while //(waypoint platform position != waypoint position)
-        //   { 
-
-
-        //float t = Mathf.PingPong(Time.time, moveDuration) / moveDuration; // gets movement value using PingPong math 
-        //transform.position = Vector3.Lerp(startPosition, endPosition, t); // lerp using pingpong value for t
-
-        // move platform toward waypoint position 
-
-        // }
-
-
-        //if (Vector3.Distance(transform.position, currentTarget) < stoppingDistance)
-        //{
-        //    // target switch for return trip check
-        //    if (currentTarget == targetPosition)
-        //    {
-        //        currentTarget = startPosition;
-        //    }
-        //    else
-        //    {
-        //        currentTarget = targetPosition;
-        //    }
-        //}
-
-        //transform.position = Vector3.SmoothDamp(transform.position, currentTarget, ref currentVelocity, smoothTime);
-
-
-        yield return new WaitForSeconds(1.0f);
-
-        // WaypointPlatform move towards next waypoint position
-
-
-
-
-
-    }
-
-
-    private void OnDrawGizmos()
-    {
-
-        if (Application.isPlaying) return;
-
-        List<Vector3> gizmoWaypoints = new List<Vector3>();
-
-        foreach (Transform child in transform)
+        switch (_movementType)// the switch to set up rthe movement type callouts once selected
         {
-            if (child.CompareTag("Waypoint"))
+            case MovementType.Loop:// nstandard looping animation
+                StartCoroutine(MoveBetweenWayPoints());
+                break;
+            case MovementType.PingPong:  // standart loop to the end point then reverses back to the start then begins loop again
+                StartCoroutine(PingPong());
+                break;
+        }
+    }
+       
+    IEnumerator MoveBetweenWayPoints() //initial  move between waypoints coroutine
+    {
+        int currentIndex = 0;// start at first position
+        while (true)
+        {
+            yield return MoveToTarget(_waypoints[currentIndex]); // sets a stop to recieve info from the movemnt enumerator
+            yield return new WaitForSeconds(1.0f);   // sets a delay of 1 second at each waypoint
+            currentIndex = (currentIndex + 1) % _waypoints.Count; // sets up the  next step in the path by moving the waypoint to
+                                                                  // the next one in the list
+        }
+    }
+        
+    IEnumerator PingPong() // initalizes the  ping pong front to back anc back to front movement  coroutine
+    {
+        int currentIndex = 0; //start at ffirst position 
+        int direction = 1; //sets direction to movve  Pos forward neg for backward
+        while (true)
+        {
+            yield return MoveToTarget(_waypoints[currentIndex]); // sets a stop to recieve info from the movemnt enumerator
+            yield return new WaitForSeconds(1.0f); // sets a delay of 1 second at each waypoint
+
+            if (currentIndex == _waypoints.Count - 1) direction = -1; // checks if the movement is on its way back  and sets next
+                                                                      // to the previous one in  the list 
+            else if (currentIndex == 0) direction = 1; // checks if the starting waytpoint is the first one in the list  and moves
+                                                       // the destination tho the next  waypoiontin the list
+
+            currentIndex += direction;
+        }
+    }
+    
+    IEnumerator MoveToTarget(Vector3 target)// sets upo the move to the next  position defined enumerator  coroutine
+    {
+        while (Vector3.Distance(rb.position, target) > 0.01f)// checks for closeness to target for easement
+        {
+            Vector3 nextPos = Vector3.MoveTowards(rb.position, target, _speed * Time.deltaTime); //formuila to move to next position
+            rb.MovePosition(nextPos); // sets the move position to next position
+            yield return new WaitForFixedUpdate(); // caused a break in loop to wait on the fixed update before continuing loop
+        }
+    }
+
+    private void OnDrawGizmos()  //Provided code
+    {
+
+        if (Application.isPlaying) return;//Provided code
+
+        List<Vector3> gizmoWaypoints = new List<Vector3>();//Provided code to make the vector list for  waypoints
+
+        foreach (Transform child in transform)//Provided code
+        {
+            if (child.CompareTag("Waypoint"))//Provided code
+            {
                 gizmoWaypoints.Add(child.position);
+            }
         }
 
-        if (gizmoWaypoints.Count == 0) return;
+        if (gizmoWaypoints.Count == 0) return;//Provided code
 
-        Gizmos.color = Color.green;
+        Gizmos.color = Color.green;//Provided code
 
-        for (int i = 0; i < gizmoWaypoints.Count; i++)
+        for (int i = 0; i < gizmoWaypoints.Count; i++)//Provided code
         {
-            Gizmos.DrawSphere(gizmoWaypoints[i], 0.2f);
+            Gizmos.DrawSphere(gizmoWaypoints[i], 0.2f);//Provided code
 
-            if (i < gizmoWaypoints.Count - 1)
+            if (i < gizmoWaypoints.Count - 1)//Provided code
             {
                 Gizmos.DrawLine(gizmoWaypoints[i], gizmoWaypoints[i + 1]);
             }
         }
     }
-
-
-
 
 }
