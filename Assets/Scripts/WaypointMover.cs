@@ -16,9 +16,9 @@ public class WaypointMover : MonoBehaviour
     Rigidbody rb;  //Provided code
     GameObject WayPointPlatform;//Provided code
 
-    List<Vector3> _waypoints = new List<Vector3>()//Provided code
+    List<Vector3> _waypoints = new List<Vector3>();//Provided code
 
-    [SerializeField] float _speed;//Provided code
+    [SerializeField] float  _speed; //Provided code
 
 
     private void Start()
